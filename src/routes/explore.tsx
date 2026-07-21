@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -24,18 +24,24 @@ export const Route = createFileRoute("/explore")({
 function ExplorePage() {
   const t = useSettings();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: () => listCategories(),
   });
   const { data: videos = [], isLoading } = useQuery({
-    queryKey: ["videos", "explore", search, cat],
+    queryKey: ["videos", "explore", debouncedSearch, cat],
     queryFn: () =>
       listVideos({
         data: {
-          search: search || undefined,
+          search: debouncedSearch || undefined,
           categorySlug: cat || undefined,
         },
       }),

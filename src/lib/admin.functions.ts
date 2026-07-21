@@ -43,9 +43,20 @@ export const upsertVideo = createServerFn({ method: "POST" })
     let fetchedThumbnail = data.thumbnail_url;
     let finalYoutubeId = data.youtube_id;
 
-    if (data.youtube_url && data.youtube_url.includes("t.me/")) {
+    let isTelegramUrl = false;
+    if (data.youtube_url) {
       try {
-        const res = await fetch(data.youtube_url + "?embed=1");
+        const u = new URL(data.youtube_url);
+        isTelegramUrl = u.hostname === "t.me" || u.hostname === "www.t.me";
+      } catch (e) {}
+    }
+
+    if (isTelegramUrl) {
+      try {
+        const targetUrl = data.youtube_url.includes("?") 
+          ? data.youtube_url.replace(/\?.*/, "?embed=1") 
+          : `${data.youtube_url}?embed=1`;
+        const res = await fetch(targetUrl);
         if (res.ok) {
           const html = await res.text();
 

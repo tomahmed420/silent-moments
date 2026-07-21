@@ -38,7 +38,12 @@ export const listVideos = createServerFn({ method: "GET" })
     let q = sb.from("videos").select(videoSelect).order("published_at", { ascending: false });
     if (data.featured) q = q.eq("is_featured", true);
     if (data.limit) q = q.limit(data.limit);
-    if (data.search) q = q.or(`title.ilike.%${data.search}%,description.ilike.%${data.search}%`);
+    if (data.search) {
+      const cleanSearch = data.search.replace(/[%,.()"\\]/g, "").trim();
+      if (cleanSearch) {
+        q = q.or(`title.ilike.%${cleanSearch}%,description.ilike.%${cleanSearch}%`);
+      }
+    }
     if (data.categorySlug) {
       const { data: cat } = await sb
         .from("categories")
@@ -88,6 +93,7 @@ export const listJournal = createServerFn({ method: "GET" })
     let q = sb
       .from("journal_entries")
       .select("id, slug, title, body, cover_url, published_at")
+      .neq("slug", "_site_settings")
       .order("published_at", { ascending: false });
     if (data.limit) q = q.limit(data.limit);
     const { data: rows, error } = await q;
@@ -99,6 +105,11 @@ export const getTelegramMediaUrl = createServerFn({ method: "GET" })
   .validator((d: unknown) => z.object({ url: z.string() }).parse(d))
   .handler(async ({ data }) => {
     try {
+      const urlObj = new URL(data.url);
+      if (urlObj.hostname !== "t.me" && urlObj.hostname !== "www.t.me") {
+        return null;
+      }
+      
       const targetUrl = data.url.includes("?")
         ? data.url.replace(/\?.*/, "?embed=1")
         : `${data.url}?embed=1`;

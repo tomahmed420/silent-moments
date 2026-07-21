@@ -24,9 +24,9 @@ function SettingsPage() {
     setIsPending(true);
     try {
       await updateFn({ data: { settings: form } });
-      toast.success("Settings saved successfully! Reload to see changes.");
+      toast.success("সেটিংস সফলভাবে সংরক্ষিত হয়েছে! পরিবর্তন দেখতে পেজটি রিলোড করুন।");
     } catch (err: Error) {
-      toast.error(err.message || "Failed to save");
+      toast.error(err.message || "সংরক্ষণ করতে সমস্যা হয়েছে");
     } finally {
       setIsPending(false);
     }
